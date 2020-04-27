@@ -166,7 +166,7 @@ void main() {
     }
         
     add_TIM(&supervisor);
-    TMA_REG = 0xC0U;
+    TMA_REG = 0xC0U;                      // nearly 50 hz? not sure
     TAC_REG = 0x04U;
     set_interrupts(VBL_IFLAG | TIM_IFLAG);
     

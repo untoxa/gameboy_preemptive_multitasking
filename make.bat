@@ -23,10 +23,6 @@
 
 @if not exist %OBJ% mkdir %OBJ%
 
-@echo ASSEMBLING THE STUB...
-sdasgb %ASMFLAGS% %OBJ%\__sdcc_call_hl.rel __sdcc_call_hl.s
-@set LFILES=%LFILES% %OBJ%\__sdcc_call_hl.rel
-
 @echo COMPILING WITH SDCC4...
 sdcc %CFLAGS% %PROJ%.c -o %OBJ%\%PROJ%.rel
 
