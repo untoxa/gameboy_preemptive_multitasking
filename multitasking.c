@@ -2,6 +2,7 @@
 #include <gb/font.h>
 #include <stdio.h>
 #include <string.h>
+#include <rand.h>
 
 #define CONTEXT_STACK_SIZE 256
 typedef void (* task_t)();
@@ -102,34 +103,44 @@ void add_task(context_t * context, task_t task) {
 }
 
 // task1
-
-int task1_counter = 0;
+const unsigned char const sprite[] = {0x00,0x00,0x00,0x3C,0x00,0x66,0x00,0x5E,0x00,0x5E,0x00,0x7E,0x00,0x3C,0x00,0x00};
+UBYTE x = 8, dx = 1, y = 16, dy = 1;
 void task1() {
+    set_sprite_data(0, 1, sprite);
+    set_sprite_tile(0, 0); 
     while (1) {
-        task1_counter++;
-        delay(100);
+        if (dx) { 
+            x++; if (x > 20 * 8 - 1) dx = 0; 
+        } else { 
+            x--; if (x < 8 + 1) dx = 1;             
+        }
+        if (dy) { 
+            y++; if (y > 18 * 8 + 8 - 1) dy = 0; 
+        } else { 
+            y--; if (y < 16 + 1) dy = 1;             
+        }
+        move_sprite(0, x, y);
+        delay(10);
     }
 }
 context_t task1_context;
 
 // task2
-
-int task2_counter = 0;
+int task2_value = 0;
 void task2() {
     while (1) {
-        task2_counter++;
-        delay(33);
+        task2_value++;
+        delay(3);
     }
 }
 context_t task2_context;
 
 // task3
-
-int task3_counter = 0;
+int task3_value = 0;
 void task3() {
     while (1) {
-        task3_counter++;
-        delay(2);
+        task3_value = rand() % 10;
+        delay(33);
     }
 }
 context_t task3_context;
@@ -155,9 +166,10 @@ void main() {
     TAC_REG = 0x04U;
     set_interrupts(VBL_IFLAG | TIM_IFLAG);
     
+    SHOW_SPRITES;
     
     while (1) {
-        printf("t1:%x t2:%x t3:%x\n", task1_counter, task2_counter, task3_counter);
+        printf("t2:0x%x t3:%d\n", task2_value, task3_value);
         delay(1000);
     }
 }
