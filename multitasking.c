@@ -19,6 +19,7 @@ __asm
         di
         pop     HL     
         pop     HL                  ; we never return to timer handler
+                                    ; registers are saved already
         
         lda     HL, 0(SP)
         ld      B, H
@@ -40,10 +41,12 @@ __asm
 
         or      H
         jr      NZ, 1$
-        ld      HL, #_first_context
+        
+        ld      HL, #_first_context 
         ld      A, (HL+)
         ld      H, (HL)
-        ld      L, A
+        ld      L, A                ; if (!next) HL = _first_context
+        
 1$:     ld      A, L
         ld      (#_current_context), A
         ld      A, H
@@ -53,9 +56,9 @@ __asm
         ld      H, (HL)
         ld      L, A
 
-        ld      SP, HL
+        ld      SP, HL              ; switch stack and restore context
 
-        pop     DE                  ; pop all regs
+        pop     DE                  ; this order is in crt
         pop     BC
         pop     AF
         pop     HL                  
@@ -88,7 +91,7 @@ void add_task(context_t * context, task_t task) {
         ld      L, A
         push    HL                  ; address of a task is pushed to task context
         
-        push    HL                  ; push all regs
+        push    HL                  ; push all regs, order as in crt
         push    AF
         push    BC
         push    DE     
@@ -100,7 +103,9 @@ void add_task(context_t * context, task_t task) {
         ld      SP, HL
     __endasm;    
     context->task_sp = __context_stack_end - 10;
+    current_context = first_context;
 }
+
 
 // task1
 const unsigned char const sprite[] = {0x00,0x00,0x00,0x3C,0x00,0x66,0x00,0x5E,0x00,0x5E,0x00,0x7E,0x00,0x3C,0x00,0x00};
@@ -158,7 +163,6 @@ void main() {
         add_task(&task2_context, &task2);
         add_task(&task3_context, &task3);   
         add_task(&main_context, 0);       // extra context is needed for main()  
-        current_context = first_context;   
     }
         
     add_TIM(&supervisor);
