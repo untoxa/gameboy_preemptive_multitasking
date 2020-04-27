@@ -17,11 +17,8 @@ context_t *current_context = 0, *first_context = 0;
 void supervisor() __naked {
 __asm        
         di
-        pop     HL     
-        pop     HL                  ; we never return to timer handler
-                                    ; registers are saved already
-        
-        lda     HL, 0(SP)
+
+        lda     HL, 4(SP)           ; we have two technical values pushed by a crt handler
         ld      B, H
         ld      C, L                ; BC = SP
         
@@ -65,6 +62,21 @@ __asm
 
         ei
         ret
+__endasm;    
+}
+
+void switch_to_thread() __naked {
+__asm        
+        di
+        push    HL
+        push    AF
+        push    BC
+        push    DE
+        
+        push    AF
+        push    AF
+            
+        jp      _supervisor
 __endasm;    
 }
 
@@ -133,19 +145,16 @@ context_t task1_context;
 // task2
 int task2_value = 0;
 void task2() {
-    while (1) {
-        task2_value++;
-        delay(3);
-    }
+    while (1) { task2_value++; }
 }
 context_t task2_context;
 
 // task3
-int task3_value = 0;
+UBYTE task3_value = 0;
 void task3() {
     while (1) {
         task3_value = rand() % 10;
-        delay(33);
+        switch_to_thread();                 // leave the rest of a quant to other tasks
     }
 }
 context_t task3_context;
@@ -153,7 +162,6 @@ context_t task3_context;
 
 // main
 context_t main_context;
-
 void main() {
 	font_init();                           // Initialize font
 	font_set(font_load(font_spect));       // Set and load the font
@@ -173,7 +181,9 @@ void main() {
     SHOW_SPRITES;
     
     while (1) {
-        printf("t2:0x%x t3:%d\n", task2_value, task3_value);
-        delay(1000);
+        __critical{ 
+            printf("t2:0x%x t3:%d\n", task2_value, (int)task3_value); 
+        }
+        delay(100);
     }
 }
