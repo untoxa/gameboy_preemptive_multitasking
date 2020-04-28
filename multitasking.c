@@ -4,21 +4,22 @@
 #include <string.h>
 #include <rand.h>
 
-#define CONTEXT_STACK_SIZE 256
+#define CONTEXT_STACK_SIZE 256                 // stack size in bytes, must be sufficent for your tasks, set it with care
 #define CONTEXT_STACK_SIZE_IN_WORDS CONTEXT_STACK_SIZE/2
-typedef void (* task_t)();
+typedef void (* task_t)();                     // prototype of a threadfunc(); no parameters for now, modify add_task() to add some
 typedef struct context_t {                     // context of a task
    unsigned char * task_sp;
    struct context_t * next;                    // next context
    UINT16 stack[CONTEXT_STACK_SIZE_IN_WORDS];  // context stack size
 } context_t;
-typedef struct {                               // context of main() -- stack is a native machine stack
+typedef struct {                               // context of main(); stack is a native stack that is set by crt
    unsigned char * task_sp;
-   struct context_t * next;   // next context
+   struct context_t * next;                    // next context
 } main_context_t;
 
-
-context_t *current_context = 0, *first_context = 0;
+context_t * current_context = 0;               // current context pointer 
+context_t * first_context = 0;                 // start of a context chain 
+main_context_t main_context;                   // this is a main task context  
 
 void supervisor() __naked {
 __asm        
@@ -130,7 +131,7 @@ context_t task1_context;
 // task2
 int task2_value = 0;
 void task2() {
-    while (1) { task2_value++; }            // increment as fast as possible
+    while (1) { task2_value++; }                // increment as fast as possible
 }
 context_t task2_context;
 
@@ -139,27 +140,25 @@ UBYTE task3_value = 0;
 void task3() {
     while (1) {
         task3_value = rand() % 10;
-        switch_to_thread();                 // leave the rest of a quant to other tasks
+        switch_to_thread();                     // leave the rest of a quant to other tasks
     }
 }
 context_t task3_context;
 
-
 // main
-main_context_t main_context;
 void main() {
-    font_init();                           // Initialize font
-    font_set(font_load(font_spect));       // Set and load the font
+    font_init();                                // Initialize font
+    font_set(font_load(font_spect));            // Set and load the font
 
     __critical {
         add_task(&task1_context, &task1);
         add_task(&task2_context, &task2);
         add_task(&task3_context, &task3);   
-        add_task((context_t*)&main_context, 0);       // extra context is needed for main()  
+        add_task((context_t*)&main_context, 0); // extra context is needed for main() !!!ALWAYS ADDED LAST!!!
     }
         
     add_TIM(&supervisor);
-    TMA_REG = 0xC0U;                      // nearly 50 hz? not sure
+    TMA_REG = 0xC0U;                            // nearly 50 hz? not sure
     TAC_REG = 0x04U;
     set_interrupts(VBL_IFLAG | TIM_IFLAG);
     
