@@ -17,7 +17,7 @@ typedef struct {                               // context of main(); stack is a 
    struct context_t * next;                    // next context
 } main_context_t;
 
-main_context_t main_context = {0, 0};         // this is a main task context  
+main_context_t main_context = {0, 0};          // this is a main task context  
 context_t * first_context = (context_t *)&main_context;    // start of a context chain 
 context_t * current_context = (context_t *)&main_context;  // current context pointer 
 
@@ -75,15 +75,14 @@ __endasm;
 void switch_to_thread() __naked {
 __asm        
         di
-        push    HL
+        push    HL                  ; push all in crt order
         push    AF
         push    BC
         push    DE
         
-        push    AF
-        push    AF
-            
-        jp      _supervisor
+        push    AF                  ; no matter what to push here: two words on the top of a stack are dropped by supervisor
+                                    ; to make it compatible with the beginning of an interriupt routine in crt
+        call    _supervisor         ; we never return, call is just for the second push
 __endasm;    
 }
 
@@ -167,10 +166,10 @@ void main() {
         add_task(&task3_context, &task3, 0);
     }
         
-    add_TIM(&supervisor);
+    add_TIM(&supervisor);                       // may be any interrupt but not standard VBL
     TMA_REG = 0xC0U;                            // nearly 50 hz? not sure
     TAC_REG = 0x04U;
-    set_interrupts(VBL_IFLAG | TIM_IFLAG);
+    set_interrupts(VBL_IFLAG | TIM_IFLAG);      // RUN!
     
     SHOW_SPRITES;
     
@@ -178,6 +177,6 @@ void main() {
         __critical{ 
             printf("t2:0x%x t3:%d\n", task2_value, (int)task3_value); 
         }
-        delay(100);
+        delay(100);                             // note: delay is not 100 anymore
     }
 }
