@@ -17,9 +17,9 @@ typedef struct {                               // context of main(); stack is a 
    struct context_t * next;                    // next context
 } main_context_t;
 
-context_t * current_context = 0;               // current context pointer 
-context_t * first_context = 0;                 // start of a context chain 
-main_context_t main_context;                   // this is a main task context  
+main_context_t main_context = {0, 0};         // this is a main task context  
+context_t * first_context = (context_t *)&main_context;    // start of a context chain 
+context_t * current_context = (context_t *)&main_context;  // current context pointer 
 
 void supervisor() __naked {
 __asm        
@@ -88,20 +88,22 @@ __endasm;
 }
 
 void add_task(context_t * context, task_t task, void * arg) {   
-    if (context) {
-        context->next = first_context;
-        first_context = context;
+    if ((context) && (task)) {
+        context_t * last_context;
+        // get last context in the chain
+        for (last_context = first_context; (last_context->next); last_context = last_context->next) ;
         
-        // if !task then it is a main thread
-        if (task) { 
-            // memset is not actually necessary
-            for (int i = 0; i < CONTEXT_STACK_SIZE_IN_WORDS; i++) context->stack[i] = 0;
-            // set stack for a new task
-            context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 1] = (UINT16)arg;       // threadfunc argument 
-            context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 3] = (UINT16)task;      // threadfunc entry point   
-            context->task_sp = &context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 7]; // space for registers (all become null on thread entry)
-        }
-        current_context = first_context;
+        // append new context
+        last_context->next = context;
+        
+        // initialize the new context
+        context->next = 0;
+        // memset is not actually necessary
+        for (int i = 0; i < CONTEXT_STACK_SIZE_IN_WORDS; i++) context->stack[i] = 0;
+        // set stack for a new task
+        context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 1] = (UINT16)arg;       // threadfunc argument 
+        context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 3] = (UINT16)task;      // threadfunc entry point   
+        context->task_sp = &context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 7]; // space for registers (all become null on thread entry)
     }
 }
 
@@ -160,13 +162,9 @@ void main() {
     font_set(font_load(font_spect));            // Set and load the font
 
     __critical {
-        // add our tasks here
         add_task(&task1_context, &task1, 0);
         add_task(&task2_context, &task2, &hello);
         add_task(&task3_context, &task3, 0);
-   
-        // extra context is needed for main(); ALWAYS ADDED LAST to be first in chain on start
-        add_task((context_t*)&main_context, 0, 0);
     }
         
     add_TIM(&supervisor);
