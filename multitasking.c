@@ -5,12 +5,18 @@
 #include <rand.h>
 
 #define CONTEXT_STACK_SIZE 256
+#define CONTEXT_STACK_SIZE_IN_WORDS CONTEXT_STACK_SIZE/2
 typedef void (* task_t)();
-typedef struct context_t {
+typedef struct context_t {                     // context of a task
+   unsigned char * task_sp;
+   struct context_t * next;                    // next context
+   UINT16 stack[CONTEXT_STACK_SIZE_IN_WORDS];  // context stack size
+} context_t;
+typedef struct {                               // context of main() -- stack is a native machine stack
    unsigned char * task_sp;
    struct context_t * next;   // next context
-   unsigned char stack[CONTEXT_STACK_SIZE];  // context stack size
-} context_t;
+} main_context_t;
+
 
 context_t *current_context = 0, *first_context = 0;
 
@@ -80,42 +86,21 @@ __asm
 __endasm;    
 }
 
-UWORD __sp_save;
-unsigned char * __context_stack_end;
-task_t __task;
-void add_task(context_t * context, task_t task) {
-    if (!context) return;
-    context->next = first_context;
-    first_context = context;
-    __context_stack_end = &context->stack[CONTEXT_STACK_SIZE - 1];
-    __task = task;    
-    __asm
-        ld      (#___sp_save), SP
-        ld      HL, #___context_stack_end
-        ld      A, (HL+)
-        ld      H, (HL)
-        ld      L, A
-        ld      SP, HL
+void add_task(context_t * context, task_t task) {   
+    if (context) {
+        context->next = first_context;
+        first_context = context;
         
-        ld      HL, #___task
-        ld      A, (HL+)
-        ld      H, (HL)
-        ld      L, A
-        push    HL                  ; address of a task is pushed to task context
-        
-        push    HL                  ; push all regs, order as in crt
-        push    AF
-        push    BC
-        push    DE     
-        
-        ld      HL, #___sp_save
-        ld      A, (HL+)
-        ld      H, (HL)
-        ld      L, A
-        ld      SP, HL
-    __endasm;    
-    context->task_sp = __context_stack_end - 10;
-    current_context = first_context;
+        // if !task then it is a main thread
+        if (task) { 
+            // memset is not actually necessary
+            for (int i = 0; i < CONTEXT_STACK_SIZE_IN_WORDS; i++) context->stack[i] = 0;
+            // set stack for a new task
+            context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 1] = (UINT16)task;
+            context->task_sp = &context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 5];
+        }
+        current_context = first_context;
+    }
 }
 
 
@@ -161,7 +146,7 @@ context_t task3_context;
 
 
 // main
-context_t main_context;
+main_context_t main_context;
 void main() {
     font_init();                           // Initialize font
     font_set(font_load(font_spect));       // Set and load the font
@@ -170,7 +155,7 @@ void main() {
         add_task(&task1_context, &task1);
         add_task(&task2_context, &task2);
         add_task(&task3_context, &task3);   
-        add_task(&main_context, 0);       // extra context is needed for main()  
+        add_task((context_t*)&main_context, 0);       // extra context is needed for main()  
     }
         
     add_TIM(&supervisor);
