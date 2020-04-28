@@ -20,7 +20,7 @@ __asm
 
         lda     HL, 4(SP)           ; we have two technical values pushed by a crt handler
         ld      B, H
-        ld      C, L                ; BC = SP
+        ld      C, L                ; BC = SP + 4
         
         ld      HL, #_current_context
         ld      A, (HL+)
@@ -145,7 +145,7 @@ context_t task1_context;
 // task2
 int task2_value = 0;
 void task2() {
-    while (1) { task2_value++; }
+    while (1) { task2_value++; }            // increment as fast as possible
 }
 context_t task2_context;
 
@@ -163,8 +163,8 @@ context_t task3_context;
 // main
 context_t main_context;
 void main() {
-	font_init();                           // Initialize font
-	font_set(font_load(font_spect));       // Set and load the font
+    font_init();                           // Initialize font
+    font_set(font_load(font_spect));       // Set and load the font
 
     __critical {
         add_task(&task1_context, &task1);
