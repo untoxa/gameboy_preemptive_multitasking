@@ -5,8 +5,8 @@
 #include <rand.h>
 
 #define CONTEXT_STACK_SIZE 256                 // stack size in bytes, must be sufficent for your tasks, set it with care
-#define CONTEXT_STACK_SIZE_IN_WORDS CONTEXT_STACK_SIZE/2
-typedef void (* task_t)();                     // prototype of a threadfunc(); no parameters for now, modify add_task() to add some
+#define CONTEXT_STACK_SIZE_IN_WORDS (CONTEXT_STACK_SIZE/2)
+typedef void (* task_t)(void * arg);           // prototype of a threadfunc()
 typedef struct context_t {                     // context of a task
    unsigned char * task_sp;
    struct context_t * next;                    // next context
@@ -87,7 +87,7 @@ __asm
 __endasm;    
 }
 
-void add_task(context_t * context, task_t task) {   
+void add_task(context_t * context, task_t task, void * arg) {   
     if (context) {
         context->next = first_context;
         first_context = context;
@@ -97,18 +97,22 @@ void add_task(context_t * context, task_t task) {
             // memset is not actually necessary
             for (int i = 0; i < CONTEXT_STACK_SIZE_IN_WORDS; i++) context->stack[i] = 0;
             // set stack for a new task
-            context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 1] = (UINT16)task;
-            context->task_sp = &context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 5];
+            context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 1] = (UINT16)arg;       // threadfunc argument 
+            context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 3] = (UINT16)task;      // threadfunc entry point   
+            context->task_sp = &context->stack[CONTEXT_STACK_SIZE_IN_WORDS - 7]; // space for registers (all become null on thread entry)
         }
         current_context = first_context;
     }
 }
 
 
+// --- "tasks" (or "threads") ---------------------
+
 // task1
 const unsigned char const sprite[] = {0x00,0x00,0x00,0x3C,0x00,0x66,0x00,0x5E,0x00,0x5E,0x00,0x7E,0x00,0x3C,0x00,0x00};
 UBYTE x = 8, dx = 1, y = 16, dy = 1;
-void task1() {
+void task1(void * arg) {
+    arg;                                        // suppress warning
     set_sprite_data(0, 1, sprite);
     set_sprite_tile(0, 0); 
     while (1) {
@@ -129,15 +133,18 @@ void task1() {
 context_t task1_context;
 
 // task2
+const unsigned char const hello[] = "hello!";
 int task2_value = 0;
-void task2() {
+void task2(void * arg) {
+    printf("arg: %s\n", arg);
     while (1) { task2_value++; }                // increment as fast as possible
 }
 context_t task2_context;
 
 // task3
 UBYTE task3_value = 0;
-void task3() {
+void task3(void * arg) {
+    arg;                                        // suppress warning
     while (1) {
         task3_value = rand() % 10;
         switch_to_thread();                     // leave the rest of a quant to other tasks
@@ -145,16 +152,21 @@ void task3() {
 }
 context_t task3_context;
 
-// main
+
+// --- main ---------------------------------------
+
 void main() {
     font_init();                                // Initialize font
     font_set(font_load(font_spect));            // Set and load the font
 
     __critical {
-        add_task(&task1_context, &task1);
-        add_task(&task2_context, &task2);
-        add_task(&task3_context, &task3);   
-        add_task((context_t*)&main_context, 0); // extra context is needed for main() !!!ALWAYS ADDED LAST!!!
+        // add our tasks here
+        add_task(&task1_context, &task1, 0);
+        add_task(&task2_context, &task2, &hello);
+        add_task(&task3_context, &task3, 0);
+   
+        // extra context is needed for main(); ALWAYS ADDED LAST to be first in chain on start
+        add_task((context_t*)&main_context, 0, 0);
     }
         
     add_TIM(&supervisor);
