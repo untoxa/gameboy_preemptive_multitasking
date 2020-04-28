@@ -108,33 +108,34 @@ void add_task(context_t * context, task_t task, void * arg) {
 
 // task1
 const unsigned char const sprite[] = {0x00,0x00,0x00,0x3C,0x00,0x66,0x00,0x5E,0x00,0x5E,0x00,0x7E,0x00,0x3C,0x00,0x00};
-UBYTE x = 8, dx = 1, y = 16, dy = 1;
+typedef struct { UBYTE idx, x, dx, y, dy, wait; } sprite_t;
+sprite_t sprite1 = {0, 8, 1, 16, 1, 10};
+sprite_t sprite2 = {1, 64, 0, 32, 1, 5};
 void task1(void * arg) {
-    arg;                                        // suppress warning
-    set_sprite_data(0, 1, sprite);
-    set_sprite_tile(0, 0); 
+    sprite_t * spr = (sprite_t *)arg;                                       
+    set_sprite_data(spr->idx, 1, sprite);
+    set_sprite_tile(spr->idx, 0); 
     while (1) {
-        if (dx) { 
-            x++; if (x > 20 * 8 - 1) dx = 0; 
+        if (spr->dx) { 
+            spr->x++; if (spr->x > 20 * 8 - 1) spr->dx = 0; 
         } else { 
-            x--; if (x < 8 + 1) dx = 1;             
+            spr->x--; if (spr->x < 8 + 1) spr->dx = 1;             
         }
-        if (dy) { 
-            y++; if (y > 18 * 8 + 8 - 1) dy = 0; 
+        if (spr->dy) { 
+            spr->y++; if (spr->y > 18 * 8 + 8 - 1) spr->dy = 0; 
         } else { 
-            y--; if (y < 16 + 1) dy = 1;             
+            spr->y--; if (spr->y < 16 + 1) spr->dy = 1;             
         }
-        move_sprite(0, x, y);
-        delay(10);
+        move_sprite(spr->idx, spr->x, spr->y);
+        delay(spr->wait);
     }
 }
-context_t task1_context;
+context_t task1_1_context, task1_2_context;
 
 // task2
-const unsigned char const hello[] = "hello!";
 int task2_value = 0;
 void task2(void * arg) {
-    printf("arg: %s\n", arg);
+    arg;
     while (1) { task2_value++; }                // increment as fast as possible
 }
 context_t task2_context;
@@ -156,12 +157,16 @@ void main() {
     font_set(font_load(font_spect));            // Set and load the font
 
     __critical {
-        add_task(&task1_context, &task1, 0);
-        add_task(&task2_context, &task2, &hello);
+        add_task(&task1_1_context, &task1, &sprite1);
+        add_task(&task1_2_context, &task1, &sprite2);
+        add_task(&task2_context, &task2, 0);
         add_task(&task3_context, &task3, 0);
     }
         
-    add_TIM(&supervisor);                       // may be any interrupt but not standard VBL
+    add_TIM(&supervisor);                       // may be any interrupt, but supervisor MUST be the last 
+                                                // in the vector, because it never returns (handlers 
+                                                // after supervisor() never get called)
+
     TMA_REG = 0xC0U;                            // nearly 50 hz? not sure
     TAC_REG = 0x04U;
     set_interrupts(VBL_IFLAG | TIM_IFLAG);      // RUN!
