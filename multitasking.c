@@ -23,8 +23,6 @@ context_t * current_context = (context_t *)&main_context;  // current context po
 
 void supervisor() __naked {
 __asm        
-        di
-
         lda     HL, 4(SP)           ; we have two technical values pushed by a crt handler
         ld      B, H
         ld      C, L                ; BC = SP + 4
@@ -67,8 +65,7 @@ __asm
         pop     AF
         pop     HL                  
 
-        ei
-        ret
+        reti
 __endasm;    
 }
 
@@ -147,15 +144,13 @@ UBYTE task3_value = 0;
 void task3(void * arg) {
     arg;                                        // suppress warning
     while (1) {
-        task3_value = rand() % 10;
+        task3_value = rand() & 0x0f;
         switch_to_thread();                     // leave the rest of a quant to other tasks
     }
 }
 context_t task3_context;
 
-
 // --- main ---------------------------------------
-
 void main() {
     font_init();                                // Initialize font
     font_set(font_load(font_spect));            // Set and load the font
@@ -174,9 +169,13 @@ void main() {
     SHOW_SPRITES;
     
     while (1) {
-        __critical{ 
-            printf("t2:0x%x t3:%d\n", task2_value, (int)task3_value); 
-        }
+        // most of the library is not "thread-safe". for example division/modulus, rand and
+        // others. you must watch VERY cerefully, what functions you are calling in your
+        // tasks. you may put unsafe parts into __critical { } blocks, but this affects
+        // the "smoothness" of parallel execution. it's also turns out tricky to catch the 
+        // moments when you can write to vram, because of unexpected task switching. if you 
+        // use loops then __critical { } solves the problem
+        printf("t2:0x%x t3:%d\n", task2_value, (int)task3_value);
         delay(100);                             // note: delay is not 100 anymore
     }
 }
