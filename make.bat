@@ -2,9 +2,10 @@
 @set PROJ=multitasking
 @set GBDK=..\..\gbdk
 @set GBDKLIB=%GBDK%\lib\small\asxxxx
-@set OBJ=build
+@set OBJ=build\
+@set SRC=src\
 
-@set CFLAGS=-mgbz80 --no-std-crt0 -Dnonbanked= -I %GBDK%\include -I %GBDK%\include\asm -I src\include -c
+@set CFLAGS=-mgbz80 --no-std-crt0 -Dnonbanked= -I %GBDK%\include -I %GBDK%\include\asm -I %SRC%include -c
 @set CFLAGS=%CFLAGS% -D_inc_ram=0xD000 -D_inc_hiram=0xFFA0
 @rem set CFLAGS=%CFLAGS% -DUSE_SFR_FOR_REG
 
@@ -24,9 +25,12 @@
 @if not exist %OBJ% mkdir %OBJ%
 
 @echo COMPILING WITH SDCC4...
-sdcc %CFLAGS% %PROJ%.c -o %OBJ%\%PROJ%.rel
+sdcc %CFLAGS% %SRC%threads.c -o %OBJ%threads.rel
+@set LFILES=%LFILES% %OBJ%threads.rel
+
+sdcc %CFLAGS% %SRC%%PROJ%.c -o %OBJ%\%PROJ%.rel
 
 @echo LINKING WITH GBDK...
-%GBDK%\bin\link-gbz80 %LFLAGS% %PROJ%.gb %LFILES% %OBJ%\%PROJ%.rel 
+%GBDK%\bin\link-gbz80 %LFLAGS% %PROJ%.gb %LFILES% %OBJ%%PROJ%.rel 
 
 @echo DONE!
