@@ -125,5 +125,5 @@ void terminate_thread(context_t * context) {
 }
 
 void join_thread(context_t * context) {
-    if (context) while (!context->finished);
+    if (context) while (!context->finished) switch_to_thread();
 }
