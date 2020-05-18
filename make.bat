@@ -5,12 +5,10 @@
 @set OBJ=build\
 @set SRC=src\
 
-@set CFLAGS=-mgbz80 --no-std-crt0 -Dnonbanked= -I %GBDK%\include -I %GBDK%\include\asm -I %SRC%include -c
-@set CFLAGS=%CFLAGS% -D_inc_ram=0xD000 -D_inc_hiram=0xFFA0
-@rem set CFLAGS=%CFLAGS% -DUSE_SFR_FOR_REG
+@set CFLAGS=-mgbz80 --no-std-crt0 -I %GBDK%\include -I %GBDK%\include\asm -I %SRC%include -c
+@rem @set CFLAGS=%CFLAGS% -DDISABLE_WAIT_STAT
 
 @set LFLAGS=-n -- -z -m -j -yt2 -yo4 -ya4 -k%GBDKLIB%\gbz80\ -lgbz80.lib -k%GBDKLIB%\gb\ -lgb.lib 
-@set LFLAGS=%LFLAGS% -g_inc_ram=0xD000 -g_inc_hiram=0xFFA0
 @set LFILES=%GBDKLIB%\gb\crt0.o
 
 @set ASMFLAGS=-plosgff -I"libc"

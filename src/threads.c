@@ -50,6 +50,15 @@ __asm
         pop     AF
         pop     HL                  
 
+#ifdef ENABLE_WAIT_STAT
+        push AF
+4$:
+        ldh a, (#_STAT_REG)
+        and #0x02
+        jr nz, 4$
+        pop AF
+#endif
+
         reti
 __endasm;    
 }

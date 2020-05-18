@@ -1,6 +1,11 @@
 #ifndef __THREADS_H_INCLUDE
 #define __THREADS_H_INCLUDE
 
+#define ENABLE_WAIT_STAT
+#ifdef DISABLE_WAIT_STAT
+    #undef ENABLE_WAIT_STAT
+#endif
+
 #include <gb/gb.h>
 
 #define DEFAULT_STACK_SIZE 0
