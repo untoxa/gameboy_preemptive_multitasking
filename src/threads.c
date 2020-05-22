@@ -77,7 +77,7 @@ __asm
 __endasm;    
 }
 
-void __trap_function(context_t * context) {
+_Noreturn void __trap_function(context_t * context) {
     context->finished = 1;
     while(1) switch_to_thread();    // it is safe to dispose context when the thread execution is here
 }
