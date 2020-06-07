@@ -49,27 +49,29 @@ __asm
 
         ld      SP, HL              ; switch stack and restore context
 
-#if __GBDK_VERSION < 312
+#if (__GBDK_VERSION < 312)
         pop     DE                  ; this order is in crt
         pop     BC
         pop     AF
         pop     HL                  
-#ifdef ENABLE_WAIT_STAT
-        push    AF
-#endif
 #else
         pop     DE                  ; this order is in GBDK 3.1.2+ crt
         pop     BC
         pop     HL                  
 #endif            
-
+#if defined(ENABLE_WAIT_STAT) && (__GBDK_VERSION < 312)
+        push    AF
+#endif
 #ifdef ENABLE_WAIT_STAT
 4$:
         ldh     A, (#_STAT_REG)
         and     #0x02
         jr      NZ, 4$
+#endif        
+#if defined(ENABLE_WAIT_STAT) || (__GBDK_VERSION >= 312)
         pop     AF
 #endif
+
         reti
 __endasm;    
 }
@@ -77,7 +79,7 @@ __endasm;
 void switch_to_thread() __naked {
 __asm        
         di
-#if __GBDK_VERSION < 312
+#if (__GBDK_VERSION < 312)
         push    HL                  ; push all in crt order
         push    AF
 #else
