@@ -5,7 +5,7 @@
 @set OBJ=build\
 @set SRC=src\
 
-@set CFLAGS=-mgbz80 --no-std-crt0 -I %GBDK%\include -I %GBDK%\include\asm -I %SRC%include -c
+@set CFLAGS=-mgbz80 --fsigned-char --no-std-crt0 -I %GBDK%\include -I %GBDK%\include\asm -I %SRC%include -c
 @rem @set CFLAGS=%CFLAGS% -DDISABLE_WAIT_STAT
 
 @set LFLAGS=-n -- -z -m -j -yt2 -yo4 -ya4 -k%GBDKLIB%\gbz80\ -lgbz80.lib -k%GBDKLIB%\gb\ -lgb.lib 
