@@ -54,6 +54,8 @@ context_t task3_context;
 
 // --- main ---------------------------------------
 void main() {
+    initrand(73);
+
     font_init();                                // Initialize font
     font_set(font_load(font_spect));            // Set and load the font
 
