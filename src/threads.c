@@ -177,10 +177,12 @@ void mutex_lock(mutex_t * mutex) __preserves_regs(a, b, c) __naked {
 __asm
         pop     de
         pop     hl
-1$:
+2$:
         sra     (hl)
-        jr      c, 1$
-        
+        jr      nc, 1$
+        call    _switch_to_thread    ; preserves everything
+        jr      2$
+1$:
         ld      h, d
         ld      l, e
         jp      (hl)        
