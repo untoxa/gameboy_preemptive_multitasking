@@ -42,4 +42,15 @@ extern context_t * get_thread_by_id(UINT8 id);
 extern void terminate_thread(context_t * context);
 extern void join_thread(context_t * context); 
 
+typedef UINT8 mutex_t;
+
+inline UINT8 mutex_init(mutex_t * mutex) {
+    if (mutex) *mutex = 0xfe; else return 1;
+    return 0;
+}
+extern UINT8 mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c);
+extern void mutex_lock(mutex_t * mutex) __preserves_regs(a, b, c);
+extern void mutex_unlock(mutex_t * mutex) __preserves_regs(a, b, c);
+inline void mutex_destroy(mutex_t * mutex) { mutex; }
+
 #endif

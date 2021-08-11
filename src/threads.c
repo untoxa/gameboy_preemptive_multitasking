@@ -154,3 +154,49 @@ void terminate_thread(context_t * context) {
 void join_thread(context_t * context) {
     if (context) while (!context->finished) switch_to_thread();
 }
+
+UINT8 mutex_trylock(mutex_t * mutex) __preserves_regs(b, c) __naked {
+    mutex;
+__asm
+        pop     de
+        pop     hl
+
+        xor     a
+        sra     (hl)
+        rla
+
+        ld      h, d
+        ld      l, e
+        ld      e, a
+        jp      (hl)        
+__endasm;
+}
+
+void mutex_lock(mutex_t * mutex) __preserves_regs(a, b, c) __naked {
+    mutex;
+__asm
+        pop     de
+        pop     hl
+1$:
+        sra     (hl)
+        jr      c, 1$
+        
+        ld      h, d
+        ld      l, e
+        jp      (hl)        
+__endasm;
+}
+
+void mutex_unlock(mutex_t * mutex) __preserves_regs(a, b, c) __naked {
+    mutex;
+__asm
+        pop     de
+        pop     hl
+
+        res     0, (hl)
+
+        ld      h, d
+        ld      l, e
+        jp      (hl)        
+__endasm;
+}
