@@ -165,7 +165,6 @@ __asm
 
         xor     a
         sra     (hl)
-        ccf
         rla
 
         ld      e, a
