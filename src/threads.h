@@ -48,9 +48,9 @@ inline UINT8 mutex_init(mutex_t * mutex) {
     if (mutex) *mutex = 0xfe; else return 1;
     return 0;
 }
-extern UINT8 mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c);
-extern void mutex_lock(mutex_t * mutex) __preserves_regs(a, b, c);
-extern void mutex_unlock(mutex_t * mutex) __preserves_regs(a, b, c);
+extern UINT8 mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d);
+extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e);
+extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e);
 inline void mutex_destroy(mutex_t * mutex) { mutex; }
 
 #endif

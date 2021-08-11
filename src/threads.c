@@ -155,50 +155,49 @@ void join_thread(context_t * context) {
     if (context) while (!context->finished) switch_to_thread();
 }
 
-UINT8 mutex_trylock(mutex_t * mutex) __preserves_regs(b, c) __naked {
+UINT8 mutex_trylock(mutex_t * mutex) __preserves_regs(b, c, d) __naked {
     mutex;
 __asm
-        pop     de
-        pop     hl
+        ldhl    sp, #2
+        ld      a, (hl+)
+        ld      h, (hl)
+        ld      l, a
 
         xor     a
         sra     (hl)
+        ccf
         rla
 
-        ld      h, d
-        ld      l, e
         ld      e, a
-        jp      (hl)        
+        ret        
 __endasm;
 }
 
-void mutex_lock(mutex_t * mutex) __preserves_regs(a, b, c) __naked {
+void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e) __naked {
     mutex;
 __asm
-        pop     de
-        pop     hl
+        ldhl    sp, #2
+        ld      a, (hl+)
+        ld      h, (hl)
+        ld      l, a
 2$:
         sra     (hl)
         jr      nc, 1$
         call    _switch_to_thread    ; preserves everything
         jr      2$
 1$:
-        ld      h, d
-        ld      l, e
-        jp      (hl)        
+        ret
 __endasm;
 }
 
-void mutex_unlock(mutex_t * mutex) __preserves_regs(a, b, c) __naked {
+void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e) __naked {
     mutex;
 __asm
-        pop     de
-        pop     hl
-
+        ldhl    sp, #2
+        ld      a, (hl+)
+        ld      h, (hl)
+        ld      l, a
         res     0, (hl)
-
-        ld      h, d
-        ld      l, e
-        jp      (hl)        
+        ret
 __endasm;
 }
