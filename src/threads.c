@@ -3,18 +3,59 @@
 #ifndef __GBDK_VERSION
 #define __GBDK_VERSION 0
 #endif
+#define THREAD_SMART_SWITCHING
 
 #include "threads.h"
 
-main_context_t main_context = {0, 0};                      // this is a main task context  
-context_t * first_context = (context_t *)&main_context;    // start of a context chain 
-context_t * current_context = (context_t *)&main_context;  // current context pointer 
+UINT8 switch_mutex = 0xff;
+main_context_t main_context = {0, 0};                           // this is a main task context  
+context_t * first_context = (context_t *)&main_context;         // start of a context chain 
+context_t * current_context = (context_t *)&main_context;       // current context pointer 
 
-void supervisor() __naked {
-__asm        
-        lda     HL, 4(SP)           ; we have two technical values pushed by a crt handler
+static void __dummy() __nonbanked __naked {
+__asm
+_supervisor_ISR::        
+#if (__GBDK_VERSION < 312)
+        push    HL                      ; push all in crt order
+        push    AF
+#else
+        push    AF                      ; push all in GBDK 3.1.2+ crt order
+        push    HL
+#endif            
+        push    BC
+        push    DE
+
+        add     SP, #-4
+        jr      _supervisor
+
+_switch_to_thread::
+        di
+#if (__GBDK_VERSION < 312)
+        push    HL                      ; push all in crt order
+        push    AF
+#else
+        push    AF                      ; push all in GBDK 3.1.2+ crt order
+        push    HL
+#endif            
+        push    BC
+        push    DE
+
+#ifdef THREAD_SMART_SWITCHING
+        ld      A, #0b11111101
+        ld      (_switch_mutex), A      ; release of the slice disables next scheduled switching of context
+#endif
+        add     SP, #-4                 ; two words on the top of a stack are dropped by supervisor
+                                        ; to make it compatible with the beginning of an interriupt routine in crt
+_supervisor::
+#ifdef THREAD_SMART_SWITCHING
+        ld      HL, #_switch_mutex      ; check whether we need to switch context this time or not
+        sra     (HL)
+        jr      nc, 3$                  ; carry is normally set here
+#endif
+                                        ; context switch is required
+        ldhl    SP, #4
         ld      B, H
-        ld      C, L                ; BC = SP + 4
+        ld      C, L                    ; BC = SP + 4
         
         ld      HL, #_current_context
         ld      A, (HL+)
@@ -24,11 +65,11 @@ __asm
         ld      (HL), C
         inc     HL
         ld      (HL), B
-        inc     HL                  ; _current_context->task_sp = SP of the task
+        inc     HL                      ; _current_context->task_sp = SP of the task
         
         ld      A, (HL+)
         ld      H, (HL)
-        ld      L, A                ; HL = context_t(_current_context)->next
+        ld      L, A                    ; HL = context_t(_current_context)->next
 
         or      H
         jr      NZ, 1$
@@ -36,9 +77,9 @@ __asm
         ld      HL, #_first_context 
         ld      A, (HL+)
         ld      H, (HL)
-        ld      L, A                ; if (!next) HL = _first_context
-        
-1$:     ld      A, L
+        ld      L, A                    ; if (!next) HL = _first_context        
+1$:
+        ld      A, L
         ld      (#_current_context), A
         ld      A, H
         ld      (#_current_context + 1), A
@@ -47,15 +88,15 @@ __asm
         ld      H, (HL)
         ld      L, A
 
-        ld      SP, HL              ; switch stack and restore context
-
+        ld      SP, HL                  ; switch stack and restore context
+2$:
 #if (__GBDK_VERSION < 312)
-        pop     DE                  ; this order is in crt
+        pop     DE                      ; this order is in crt
         pop     BC
         pop     AF
         pop     HL                  
 #else
-        pop     DE                  ; this order is in GBDK 3.1.2+ crt
+        pop     DE                      ; this order is in GBDK 3.1.2+ crt
         pop     BC
         pop     HL                  
 #endif            
@@ -73,31 +114,17 @@ __asm
 #endif
 
         reti
-__endasm;    
-}
-
-void switch_to_thread() __naked {
-__asm        
-        di
-#if (__GBDK_VERSION < 312)
-        push    HL                  ; push all in crt order
-        push    AF
-#else
-        push    AF                  ; push all in GBDK 3.1.2+ crt order
-        push    HL
-#endif            
-        push    BC
-        push    DE
-        
-        push    AF                  ; no matter what to push here: two words on the top of a stack are dropped by supervisor
-                                    ; to make it compatible with the beginning of an interriupt routine in crt
-        call    _supervisor         ; we never return, call is just for the second push
+#ifdef THREAD_SMART_SWITCHING
+3$:                                     ; switching is not required, context was switched by user during the previous slice
+        add     SP, #4
+        jr      2$
+#endif
 __endasm;    
 }
 
 _Noreturn void __trap_function(context_t * context) {
     context->finished = 1;
-    while(1) switch_to_thread();    // it is safe to dispose context when the thread execution is here
+    while(1) switch_to_thread();        // it is safe to dispose context when the thread execution is here
 }
 
 context_t * get_thread_by_id(UINT8 id) {
