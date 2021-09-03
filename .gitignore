@@ -1,4 +1,6 @@
 /build
+/obj
 *.bak
 *.map
 *.sym
+/.vscode

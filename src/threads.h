@@ -6,7 +6,7 @@
     #undef ENABLE_WAIT_STAT
 #endif
 
-#include <gb/gb.h>
+#include <stdint.h>
 
 #define DEFAULT_STACK_SIZE 0
 
@@ -18,10 +18,10 @@ typedef struct context_t {                      // context of a thread
     struct context_t * next;                    // next context
     void * queue;                               // queue of the context
     void * userdata;                            // user data of the context
-    UINT8 thread_id;                            // identifier of a thread
-    UINT8 terminated;                           // thread termination signal 
-    UINT8 finished;                             // thread finished signal
-    UINT16 stack[CONTEXT_STACK_SIZE_IN_WORDS];  // context stack size
+    uint8_t thread_id;                            // identifier of a thread
+    uint8_t terminated;                           // thread termination signal 
+    uint8_t finished;                             // thread finished signal
+    uint16_t stack[CONTEXT_STACK_SIZE_IN_WORDS];  // context stack size
 } context_t;
 typedef struct {                                // context of main(): stack is "crt-native"
     unsigned char * task_sp;                    // current stack pointer of main()
@@ -39,20 +39,29 @@ void supervisor_ISR();                          // bare ISR handler for use with
 extern void create_thread(context_t * context, int stack_size, threadproc_t threadproc, void * arg);
 extern void destroy_thread(context_t * context);
 
-extern context_t * get_thread_by_id(UINT8 id);
+extern context_t * get_thread_by_id(uint8_t id);
 
 extern void terminate_thread(context_t * context);
 extern void join_thread(context_t * context); 
 
-typedef UINT8 mutex_t;
+typedef uint8_t mutex_t;
 
-inline UINT8 mutex_init(mutex_t * mutex) {
+inline uint8_t mutex_init(mutex_t * mutex) {
     if (mutex) *mutex = 0xfe; else return 1;
     return 0;
 }
-extern UINT8 mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d);
+
+#if defined(__TARGET_gb) || defined(__TARGET_ap)
+extern uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d);
 extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e);
 extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e);
+#elif defined(__TARGET_sms) || defined(__TARGET_gg)
+extern uint8_t mutex_try_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
+extern void mutex_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
+extern void mutex_unlock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
+#else
+#error Unrecognized port
+#endif
 inline void mutex_destroy(mutex_t * mutex) { mutex; }
 
 #endif
