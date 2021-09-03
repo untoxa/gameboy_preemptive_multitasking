@@ -1,5 +1,5 @@
-Preemptive multitasking example for GAME BOY
---------------------------------------------
+Preemptive multitasking example for GAME BOY / SEGA MASTER SYSTEM / SEGA GAME GEAR
+----------------------------------------------------------------------------------
 
 Written in SDCC. Supervisor is a small asm routine driven by timer interrupt. 
 You can simply create, terminate, join and destroy threads, like you do it in 
