@@ -6,13 +6,6 @@
 
 #include "threads.h"
 
-void waste_cycles() {
-    for (uint16_t i = 0; i != 64; i++) ; 
-}
-void busywait(uint16_t iter) {
-    for (uint16_t i = 0; i != iter; i++) waste_cycles();
-}
-
 // task1
 const unsigned char const sprite[] = {0x00,0x00,0x00,0x3C,0x00,0x66,0x00,0x5E,0x00,0x5E,0x00,0x7E,0x00,0x3C,0x00,0x00};
 typedef struct { UBYTE idx, x, dx, y, dy, wait; } sprite_t;
@@ -35,7 +28,7 @@ void task1(void * arg, void * ctx) {
             spr->y--; if (spr->y <= 1) spr->dy = 1;             
         }
         move_sprite(spr->idx, DEVICE_SPRITE_OFFSET_X + spr->x, DEVICE_SPRITE_OFFSET_Y + spr->y);
-        busywait(spr->wait);
+        delay(spr->wait);
     }
 }
 context_t task1_1_context, task1_2_context;
@@ -101,6 +94,6 @@ void main() {
             lines = 0;
         }
         printf("t2:0x%x t3:%d\n", task2_value, (int)task3_value);
-        busywait(100);
+        delay(100);
     }
 }
