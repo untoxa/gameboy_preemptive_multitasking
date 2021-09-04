@@ -1,4 +1,5 @@
 #include <gbdk/platform.h>
+#include <gbdk/console.h>
 #include <gbdk/font.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,8 +15,11 @@ sprite_t sprite2 = {1, 64, 0, 32, 1, 5};
 void task1(void * arg, void * ctx) {
     ctx;
     sprite_t * spr = (sprite_t *)arg;
-    set_sprite_data(spr->idx, 1, sprite);
-    set_sprite_tile(spr->idx, 0);
+    __critical {
+        // these functions are non-reentrant on SMS/GG
+        set_sprite_data(spr->idx, 1, sprite);
+        set_sprite_tile(spr->idx, 0);
+    }
     while (TRUE) {
         if (spr->dx) { 
             spr->x++; if (spr->x >= ((DEVICE_SCREEN_WIDTH - 1) * 8 - 1)) spr->dx = 0; 
@@ -93,6 +97,7 @@ void main() {
             cls();
             lines = 0;
         }
+        // printf() is non-reentrant on SMS/GG, but we have no conflicting calls in the other threads
         printf("t2:0x%x t3:%d\n", task2_value, (int)task3_value);
         delay(100);
     }
