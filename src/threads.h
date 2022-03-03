@@ -51,11 +51,11 @@ inline uint8_t mutex_init(mutex_t * mutex) {
     return 0;
 }
 
-#if defined(__TARGET_gb) || defined(__TARGET_ap)
+#if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
 extern uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d);
 extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e);
 extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e);
-#elif defined(__TARGET_sms) || defined(__TARGET_gg)
+#elif defined(__TARGET_sms) || defined(__TARGET_gg) || defined(__TARGET_msxdos)
 extern uint8_t mutex_try_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
 extern void mutex_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
 extern void mutex_unlock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);

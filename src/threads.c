@@ -5,9 +5,9 @@
 
 #include "threads.h"
 
-#if defined(__TARGET_gb) || defined(__TARGET_ap)
+#if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
     #define REGISTER_BLOB_SIZE 4
-#elif defined(__TARGET_sms) || defined(__TARGET_gg)
+#elif defined(__TARGET_sms) || defined(__TARGET_gg) || defined(__TARGET_msxdos)
     #define REGISTER_BLOB_SIZE 6
 #endif
 
@@ -18,7 +18,7 @@ context_t * current_context = (context_t *)&main_context;       // current conte
 
 static void __dummy() __nonbanked __naked {
 __asm
-#if defined(__TARGET_gb) || defined(__TARGET_ap)
+#if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
 _supervisor_ISR::        
 #if (__GBDK_VERSION < 312)
         push    HL                      ; push all in crt order
@@ -124,7 +124,7 @@ _supervisor::
         add     SP, #4
         jr      2$
 #endif
-#elif defined(__TARGET_sms) || defined(__TARGET_gg)
+#elif defined(__TARGET_sms) || defined(__TARGET_gg) || defined(__TARGET_msxdos)
 _supervisor_ISR::        
         push    af
         push    bc
@@ -265,7 +265,7 @@ void join_thread(context_t * context) {
     if (context) while (!context->finished) switch_to_thread();
 }
 
-#if defined(__TARGET_gb) || defined(__TARGET_ap)
+#if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
 uint8_t mutex_trylock(mutex_t * mutex) __preserves_regs(b, c, d) __naked {
     mutex;
 __asm
@@ -309,7 +309,7 @@ __asm
         ret
 __endasm;
 }
-#elif defined(__TARGET_sms) || defined(__TARGET_gg)
+#elif defined(__TARGET_sms) || defined(__TARGET_gg) || defined(__TARGET_msxdos)
 uint8_t mutex_try_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl) __naked {
     mutex;
 __asm

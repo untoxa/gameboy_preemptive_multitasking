@@ -31,7 +31,7 @@ void task1(void * arg, void * ctx) {
         } else { 
             spr->y--; if (spr->y <= 1) spr->dy = 1;             
         }
-        move_sprite(spr->idx, DEVICE_SPRITE_OFFSET_X + spr->x, DEVICE_SPRITE_OFFSET_Y + spr->y);
+        move_sprite(spr->idx, DEVICE_SPRITE_PX_OFFSET_X + spr->x, DEVICE_SPRITE_PX_OFFSET_Y + spr->y);
         delay(spr->wait);
     }
 }
