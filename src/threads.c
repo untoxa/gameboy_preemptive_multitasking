@@ -205,7 +205,7 @@ _supervisor::
 __endasm;    
 }
 
-_Noreturn void __trap_function(context_t * context) {
+_Noreturn void __trap_function(context_t * context) __sdcccall(0) {
     context->finished = 1;
     while(1) switch_to_thread();        // it is safe to dispose context when the thread execution is here
 }
@@ -266,7 +266,7 @@ void join_thread(context_t * context) {
 }
 
 #if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
-uint8_t mutex_trylock(mutex_t * mutex) __preserves_regs(b, c, d) __naked {
+uint8_t mutex_trylock(mutex_t * mutex) __preserves_regs(b, c, d) __naked __sdcccall(0) {
     mutex;
 __asm
         ldhl    sp, #2
@@ -282,7 +282,7 @@ __asm
         ret        
 __endasm;
 }
-void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e) __naked {
+void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e) __naked __sdcccall(0) {
     mutex;
 __asm
         ldhl    sp, #2
@@ -298,7 +298,7 @@ __asm
         ret
 __endasm;
 }
-void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e) __naked {
+void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e) __naked __sdcccall(0) {
     mutex;
 __asm
         ldhl    sp, #2

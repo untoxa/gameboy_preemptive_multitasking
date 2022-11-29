@@ -12,7 +12,7 @@ const unsigned char const sprite[] = {0x00,0x00,0x00,0x3C,0x00,0x66,0x00,0x5E,0x
 typedef struct { UBYTE idx, x, dx, y, dy, wait; } sprite_t;
 sprite_t sprite1 = {0, 0, 1, 0, 1, 7};
 sprite_t sprite2 = {1, 64, 0, 32, 1, 5};
-void task1(void * arg, void * ctx) {
+void task1(void * arg, void * ctx) __sdcccall(0) {
     ctx;
     sprite_t * spr = (sprite_t *)arg;
     __critical {
@@ -39,7 +39,7 @@ context_t task1_1_context, task1_2_context;
 
 // task2
 int task2_value = 0;
-void task2(void * arg, void * ctx) {
+void task2(void * arg, void * ctx) __sdcccall(0) {
     arg; ctx;
     while (TRUE) { task2_value++; }                // increment as fast as possible
 }
@@ -47,7 +47,7 @@ context_t task2_context;
 
 // task3
 UBYTE task3_value = 0;
-void task3(void * arg, void * ctx) {
+void task3(void * arg, void * ctx) __sdcccall(0) {
     arg; ctx;                                        // suppress warning
     while (TRUE) {
         task3_value = rand() & 0x0f;

@@ -12,7 +12,7 @@
 
 #define CONTEXT_STACK_SIZE 256                  // stack size in bytes, must be sufficent for your threads, set it with care
 #define CONTEXT_STACK_SIZE_IN_WORDS (CONTEXT_STACK_SIZE >> 1)
-typedef void (* threadproc_t)(void * arg, void * ctx); // prototype of a threadproc()
+typedef void (* threadproc_t)(void * arg, void * ctx) __sdcccall(0); // prototype of a threadproc()
 typedef struct context_t {                      // context of a thread
     unsigned char * task_sp;                    // current stack pointer of a thread
     struct context_t * next;                    // next context
@@ -52,9 +52,9 @@ inline uint8_t mutex_init(mutex_t * mutex) {
 }
 
 #if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
-extern uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d);
-extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e);
-extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e);
+extern uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d) __sdcccall(0);
+extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e) __sdcccall(0);
+extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e) __sdcccall(0);
 #elif defined(__TARGET_sms) || defined(__TARGET_gg) || defined(__TARGET_msxdos)
 extern uint8_t mutex_try_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
 extern void mutex_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
