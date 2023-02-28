@@ -266,7 +266,7 @@ void join_thread(context_t * context) {
 }
 
 #if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
-uint8_t mutex_trylock(mutex_t * mutex) __preserves_regs(b, c, d) __naked __sdcccall(0) {
+uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d) __naked __sdcccall(0) {
     mutex;
 __asm
         ldhl    sp, #2
