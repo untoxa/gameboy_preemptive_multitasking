@@ -31,10 +31,10 @@ typedef struct {                                // context of main(): stack is "
 extern main_context_t main_context;             // this is a main() context  
 extern context_t * first_context;               // start of a context chain 
 
-extern void supervisor();                       // supervisor function
-extern void switch_to_thread();                 // release the rest of the slice and switch to the next thread
+extern void supervisor(void);                   // supervisor function
+extern void switch_to_thread(void);             // release the rest of the slice and switch to the next thread
 
-void supervisor_ISR();                          // bare ISR handler for use with ISR_VECTOR() macro only
+void supervisor_ISR(void);                      // bare ISR handler for use with ISR_VECTOR() macro only
 
 extern void create_thread(context_t * context, int stack_size, threadproc_t threadproc, void * arg);
 extern void destroy_thread(context_t * context);

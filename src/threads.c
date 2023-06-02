@@ -16,7 +16,7 @@ main_context_t main_context = {0, 0};                           // this is a mai
 context_t * first_context = (context_t *)&main_context;         // start of a context chain 
 context_t * current_context = (context_t *)&main_context;       // current context pointer 
 
-static void __dummy() __nonbanked __naked {
+static void __dummy(void) __nonbanked __naked {
 __asm
 #if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
 _supervisor_ISR::        
@@ -219,7 +219,7 @@ context_t * get_thread_by_id(uint8_t id) {
     return 0;
 }
 
-uint8_t generate_thread_id() {
+uint8_t generate_thread_id(void) {
     uint8_t id = 1;
     while (get_thread_by_id(id)) id++;
     return id;

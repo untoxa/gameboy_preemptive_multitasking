@@ -57,7 +57,7 @@ void task3(void * arg, void * ctx) __sdcccall(0) {
 context_t task3_context;
 
 // --- main ---------------------------------------
-void main() {
+void main(void) {
     initrand(73);
 
     font_init();                                // Initialize font
