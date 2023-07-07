@@ -19,7 +19,7 @@ typedef struct context_t {                      // context of a thread
     void * queue;                               // queue of the context
     void * userdata;                            // user data of the context
     uint8_t thread_id;                            // identifier of a thread
-    uint8_t terminated;                           // thread termination signal 
+    uint8_t terminated;                           // thread termination signal
     uint8_t finished;                             // thread finished signal
     uint16_t stack[CONTEXT_STACK_SIZE_IN_WORDS];  // context stack size
 } context_t;
@@ -28,8 +28,8 @@ typedef struct {                                // context of main(): stack is "
     struct context_t * next;                    // next context
 } main_context_t;
 
-extern main_context_t main_context;             // this is a main() context  
-extern context_t * first_context;               // start of a context chain 
+extern main_context_t main_context;             // this is a main() context
+extern context_t * first_context;               // start of a context chain
 
 extern void supervisor(void);                   // supervisor function
 extern void switch_to_thread(void);             // release the rest of the slice and switch to the next thread
@@ -42,7 +42,7 @@ extern void destroy_thread(context_t * context);
 extern context_t * get_thread_by_id(uint8_t id);
 
 extern void terminate_thread(context_t * context);
-extern void join_thread(context_t * context); 
+extern void join_thread(context_t * context);
 
 typedef uint8_t mutex_t;
 
@@ -52,9 +52,9 @@ inline uint8_t mutex_init(mutex_t * mutex) {
 }
 
 #if defined(__TARGET_gb) || defined(__TARGET_ap) || defined(__TARGET_megaduck)
-extern uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c, d) __sdcccall(0);
-extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c, d, e) __sdcccall(0);
-extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c, d, e) __sdcccall(0);
+extern uint8_t mutex_try_lock(mutex_t * mutex) __preserves_regs(b, c) __sdcccall(1);
+extern void mutex_lock(mutex_t * mutex) __preserves_regs(b, c) __sdcccall(1);
+extern void mutex_unlock(mutex_t * mutex) __preserves_regs(b, c) __sdcccall(1);
 #elif defined(__TARGET_sms) || defined(__TARGET_gg) || defined(__TARGET_msxdos)
 extern uint8_t mutex_try_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
 extern void mutex_lock(mutex_t * mutex) __z88dk_fastcall __preserves_regs(b, c, d, e, iyh, iyl);
